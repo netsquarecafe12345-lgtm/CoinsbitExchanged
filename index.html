@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coinsbitexchange — Demo Dashboard</title>
+<script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
+<style>
+:root{
+  --bg:#f6f8fb;--card:#fff;--muted:#6b7280;
+  --accent:#0f6cff;--green:#16a34a;--red:#ef4444;
+  font-family:Inter,system-ui,Arial;
+}
+body{margin:0;background:var(--bg);color:#111;padding:20px;}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;}
+.logo{width:44px;height:44px;border-radius:10px;
+background:linear-gradient(135deg,var(--accent),#7c5cff);
+display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:18px;}
+.controls{display:flex;gap:10px;}
+.btn{background:var(--accent);color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-weight:600;}
+.ghost{background:transparent;border:1px solid #ddd;color:var(--muted);padding:8px 14px;border-radius:8px;cursor:pointer;}
+.layout{display:grid;grid-template-columns:1fr 300px;gap:16px;}
+.card{background:var(--card);border-radius:10px;box-shadow:0 4px 14px rgba(0,0,0,0.05);padding:16px;}
+.modal{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  background:rgba(0,0,0,0.4);display:none;align-items:center;justify-content:center;z-index:50;
+}
+.modal-content{
+  background:#fff;padding:20px;border-radius:10px;max-width:340px;width:90%;
+  box-shadow:0 4px 16px rgba(0,0,0,0.2);
+}
+.modal-content h3{text-align:center;margin-top:0;}
+input[type=text],input[type=password],input[type=number]{
+  width:100%;padding:10px;margin-bottom:10px;border:1px solid #ccc;border-radius:8px;
+}
+.trade-btns{display:flex;gap:8px;margin-top:10px;}
+.trade-btns button{flex:1;}
+.payment-options{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;}
+.payment-options button{padding:10px;border-radius:8px;border:1px solid #ddd;cursor:pointer;background:#f9f9f9;font-weight:600;}
+.verification-message{margin-top:10px;color:var(--accent);text-align:center;font-weight:600;}
+.chart-container{height:400px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand" style="display:flex;align-items:center;gap:10px;">
+    <div class="logo">CB</div>
+    <div>
+      <div style="font-weight:700;">Coinsbitexchange</div>
+      <div style="font-size:12px;color:var(--muted)">Light Theme • Live Demo</div>
+    </div>
+  </div>
+  <div class="controls">
+    <button class="btn" id="loginBtn">Login</button>
+    <button class="ghost" id="signupBtn">Sign Up</button>
+    <button class="ghost" id="logoutBtn" style="display:none;">Logout</button>
+  </div>
+</header>
+
+<main class="layout">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <div style="font-weight:700;">BTC/USDT</div>
+        <div id="priceDisplay" style="font-size:24px;font-weight:800;">60,000.00</div>
+      </div>
+      <div id="changeDisplay" style="font-weight:700;color:var(--green)">+0.5%</div>
+    </div>
+    <div class="chart-container" id="chart"></div>
+
+    <!-- Account summary -->
+    <div id="balancePanel" style="margin-top:15px;border-top:1px solid #eee;padding-top:10px;">
+      <div style="font-weight:700;margin-bottom:6px;">Account Summary</div>
+      <div id="accountName" style="font-size:14px;color:var(--muted)">Guest</div>
+      <div style="display:flex;gap:20px;margin-top:6px;">
+        <div>BTC Balance: <span id="btcBalance">0.0000</span></div>
+        <div>USDT Balance: <span id="usdtBalance">0.00</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="font-weight:700;margin-bottom:8px;">Trade Actions</div>
+    <div class="trade-btns">
+      <button class="btn" id="buyBtn">Buy</button>
+      <button class="btn" id="sellBtn" style="background:var(--red)">Sell</button>
+    </div>
+    <div class="trade-btns">
+      <button class="btn" id="transferBtn" style="background:#10b981">Transfer</button>
+    </div>
+  </div>
+</main>
+
+<!-- LOGIN MODAL -->
+<div class="modal" id="loginModal">
+  <div class="modal-content">
+    <h3>Login</h3>
+    <input type="text" id="loginUser" placeholder="Username">
+    <input type="password" id="loginPass" placeholder="Password">
+    <button class="btn" id="doLogin">Login</button>
+    <p id="loginMsg" class="verification-message"></p>
+  </div>
+</div>
+
+<!-- SIGNUP MODAL -->
+<div class="modal" id="signupModal">
+  <div class="modal-content">
+    <h3>Sign Up</h3>
+    <input type="text" id="signupUser" placeholder="Create Username">
+    <input type="password" id="signupPass" placeholder="Create Password">
+    <button class="btn" id="doSignup">Sign Up</button>
+    <p id="signupMsg" class="verification-message"></p>
+  </div>
+</div>
+
+<!-- TRANSFER MODAL -->
+<div class="modal" id="transferModal">
+  <div class="modal-content">
+    <h3>Select Transfer Method</h3>
+    <div class="payment-options">
+      <button data-method="Alipay">Alipay</button>
+      <button data-method="WeChat">WeChat</button>
+      <button data-method="BTC">BTC</button>
+      <button data-method="Coins">Coins</button>
+    </div>
+    <p id="verifyMsg" class="verification-message"></p>
+  </div>
+</div>
+
+<script>
+// --- Chart setup ---
+const chart = LightweightCharts.createChart(document.getElementById('chart'), {
+  layout:{background:{color:'#fff'},textColor:'#333'},
+  grid:{vertLines:{color:'#eee'},horzLines:{color:'#eee'}},
+  width:document.getElementById('chart').clientWidth,
+  height:400,
+});
+const series = chart.addCandlestickSeries();
+let price = 60000;
+let candles = [];
+for(let i=0;i<50;i++){
+  const open = price + (Math.random()-0.5)*200;
+  const close = open + (Math.random()-0.5)*100;
+  const high = Math.max(open,close)+Math.random()*100;
+  const low = Math.min(open,close)-Math.random()*100;
+  candles.push({time:i,open,high,low,close});
+  price = close;
+}
+series.setData(candles);
+
+function updateChart(){
+  const last = candles[candles.length-1];
+  const newOpen = last.close;
+  const newClose = newOpen + (Math.random()-0.5)*150;
+  const newHigh = Math.max(newOpen,newClose)+Math.random()*80;
+  const newLow = Math.min(newOpen,newClose)-Math.random()*80;
+  candles.push({time:last.time+1,open:newOpen,high:newHigh,low:newLow,close:newClose});
+  if(candles.length>100) candles.shift();
+  series.update(candles[candles.length-1]);
+  const change = ((newClose - 60000)/60000*100).toFixed(2);
+  document.getElementById('priceDisplay').innerText = newClose.toFixed(2);
+  const chEl = document.getElementById('changeDisplay');
+  chEl.innerText = (change>0?'+':'') + change + '%';
+  chEl.style.color = change>=0 ? 'var(--green)' : 'var(--red)';
+}
+setInterval(updateChart, 3000);
+
+// --- Demo account data ---
+let account = {name:"Guest", btc:0.0000, usdt:0.00};
+function showAccount(){
+  document.getElementById('accountName').innerText = account.name;
+  document.getElementById('btcBalance').innerText = parseFloat(account.btc).toFixed(4);
+  document.getElementById('usdtBalance').innerText = parseFloat(account.usdt).toFixed(2);
+}
+showAccount();
+
+// --- Modals ---
+const loginModal = document.getElementById('loginModal');
+const signupModal = document.getElementById('signupModal');
+const transferModal = document.getElementById('transferModal');
+
+document.getElementById('loginBtn').onclick = ()=> loginModal.style.display='flex';
+document.getElementById('signupBtn').onclick = ()=> signupModal.style.display='flex';
+document.getElementById('logoutBtn').onclick = ()=>{
+  alert('You have been logged out (demo)');
+  document.getElementById('logoutBtn').style.display='none';
+  document.getElementById('loginBtn').style.display='inline-block';
+  document.getElementById('signupBtn').style.display='inline-block';
+  account = {name:"Guest",btc:0,usdt:0};
+  showAccount();
+};
+
+document.getElementById('doLogin').onclick = ()=>{
+  const u = document.getElementById('loginUser').value.trim();
+  const p = document.getElementById('loginPass').value.trim();
+  const msg = document.getElementById('loginMsg');
+  if(!u || !p){ msg.innerText='Enter username and password';return; }
+  msg.innerText='Login successful! Redirecting...';
+  setTimeout(()=>{
+    loginModal.style.display='none';
+    document.getElementById('logoutBtn').style.display='inline-block';
+    document.getElementById('loginBtn').style.display='none';
+    document.getElementById('signupBtn').style.display='none';
+    account.name = u;
+    account.btc = (Math.random()*0.5).toFixed(4);
+    account.usdt = (Math.random()*5000).toFixed(2);
+    showAccount();
+  },1000);
+};
+
+document.getElementById('doSignup').onclick = ()=>{
+  const u = document.getElementById('signupUser').value.trim();
+  const p = document.getElementById('signupPass').value.trim();
+  const msg = document.getElementById('signupMsg');
+  if(!u || !p){ msg.innerText='Enter username and password';return; }
+  msg.innerText='Account created! You can now log in.';
+  setTimeout(()=> signupModal.style.display='none', 1500);
+};
+
+// --- Transfer modal ---
+document.getElementById('transferBtn').onclick = ()=> transferModal.style.display='flex';
+document.querySelectorAll('.payment-options button').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.getElementById('verifyMsg').innerText =
+      btn.dataset.method + ' selected. Verification required...';
+    setTimeout(()=>{document.getElementById('verifyMsg').innerText='Verified (demo).';},2000);
+  });
+});
+
+// --- Buy/Sell Demo ---
+document.getElementById('buyBtn').onclick = ()=> alert('Buy order placed (demo)');
+document.getElementById('sellBtn').onclick = ()=> alert('Sell order placed (demo)');
+
+// --- Close modal on outside click ---
+window.onclick = function(e){
+  [loginModal,signupModal,transferModal].forEach(m=>{
+    if(e.target===m) m.style.display='none';
+  });
+};
+</script>
+</body>
+</html>
